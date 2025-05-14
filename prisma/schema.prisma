@@ -1,0 +1,109 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id            String         @id @default(cuid())
+    name          String?
+    email         String?        @unique
+    emailVerified DateTime?
+    image         String?
+    accounts      Account[]
+    sessions      Session[]
+    workouts      Workout[]
+    personalBests PersonalBest[]
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @updatedAt
+}
+
+model Workout {
+    id           String     @id @default(uuid())
+    date         DateTime   @default(now())
+    workoutType  String
+    muscleGroups String[]
+    comments     String?
+    exercises    Exercise[]
+    userId       String
+    user         User       @relation(fields: [userId], references: [id])
+}
+
+model Exercise {
+    id            String       @id @default(uuid())
+    name          String
+    sets          Int
+    reps          Int
+    weight        Float
+    workoutId     String
+    workout       Workout      @relation(fields: [workoutId], references: [id])
+    muscleGroupId String?
+    muscleGroup   MuscleGroup? @relation("MuscleGroupExercises", fields: [muscleGroupId], references: [id])
+
+    @@index([name])
+}
+
+model PersonalBest {
+    id       String @id @default(uuid())
+    exercise String
+    weight   Float
+    reps     Int
+    userId   String
+    user     User   @relation(fields: [userId], references: [id])
+}
+
+model MuscleGroup {
+    id        String     @id @default(uuid())
+    name      String
+    exercises Exercise[] @relation("MuscleGroupExercises")
+}
+
+model WorkoutTemplate {
+    id           String   @id @default(uuid())
+    name         String
+    muscleGroups String[]
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model Account {
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([provider, providerAccountId])
+}
+
+model Session {
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+    identifier String
+    token      String
+    expires    DateTime
+
+    @@id([identifier, token])
+}
