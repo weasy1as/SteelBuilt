@@ -1,109 +1,137 @@
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
+  output   = "./node_modules/.prisma/client"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-    id            String         @id @default(cuid())
-    name          String?
-    email         String?        @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    workouts      Workout[]
-    personalBests PersonalBest[]
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String?
+  email         String?        @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  workouts      Workout[]
+  personalBests PersonalBest[]
+  goals         Goal[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Workout {
-    id           String     @id @default(uuid())
-    date         DateTime   @default(now())
-    workoutType  String
-    muscleGroups String[]
-    comments     String?
-    exercises    Exercise[]
-    userId       String
-    user         User       @relation(fields: [userId], references: [id])
+  id            String       @id @default(cuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date          DateTime
+  type          String
+  comments      String?
+  workoutTypeId String?
+  workoutType   WorkoutType? @relation(fields: [workoutTypeId], references: [id])
+  exercises     Exercise[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkoutType {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  workouts Workout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Exercise {
-    id            String       @id @default(uuid())
-    name          String
-    sets          Int
-    reps          Int
-    weight        Float
-    workoutId     String
-    workout       Workout      @relation(fields: [workoutId], references: [id])
-    muscleGroupId String?
-    muscleGroup   MuscleGroup? @relation("MuscleGroupExercises", fields: [muscleGroupId], references: [id])
+  id             String @id @default(cuid())
+  workoutId      String
+  exerciseTypeId String
+  sets           Int
+  reps           Int
+  weight         Float
 
-    @@index([name])
+  workout      Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model PersonalBest {
-    id       String @id @default(uuid())
-    exercise String
-    weight   Float
-    reps     Int
-    userId   String
-    user     User   @relation(fields: [userId], references: [id])
+model ExerciseType {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  muscleGroups MuscleGroup[] @relation("ExerciseTypeMuscleGroups")
+  exercises    Exercise[] // Exercises performed (logs)
 }
 
 model MuscleGroup {
-    id        String     @id @default(uuid())
-    name      String
-    exercises Exercise[] @relation("MuscleGroupExercises")
+  id            String         @id @default(cuid())
+  name          String         @unique
+  exerciseTypes ExerciseType[] @relation("ExerciseTypeMuscleGroups")
 }
 
-model WorkoutTemplate {
-    id           String   @id @default(uuid())
-    name         String
-    muscleGroups String[]
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+model Goal {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetDate  DateTime?
+  achieved    Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PersonalBest {
+  id       String @id @default(uuid())
+  exercise String
+  weight   Float
+  reps     Int
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
 }
 
 model Account {
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String?
-    access_token      String?
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String?
-    session_state     String?
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id([provider, providerAccountId])
+  @@id([provider, providerAccountId])
 }
 
 model Session {
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
-    identifier String
-    token      String
-    expires    DateTime
+  identifier String
+  token      String
+  expires    DateTime
 
-    @@id([identifier, token])
+  @@id([identifier, token])
 }

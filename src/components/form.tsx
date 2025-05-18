@@ -1,186 +1,160 @@
 "use client";
-import React, { useState } from "react";
 
-interface WorkoutFormData {
-  date: string;
-  workoutType: string;
-  muscleGroups: string;
-  comments: string;
-  exercises: {
-    name: string;
-    sets: number;
-    reps: number;
-    weight: number;
-  }[];
-}
+import React, { useEffect, useState } from "react";
 
 const Form = () => {
-  const [formData, setFormData] = useState<WorkoutFormData>({
-    date: "",
-    workoutType: "",
-    muscleGroups: "",
-    comments: "",
-    exercises: [
-      {
-        name: "",
-        sets: 0,
-        reps: 0,
-        weight: 0,
-      },
-    ],
-  });
+  const [exercises, setExercises] = useState([
+    { type: "", sets: 0, reps: 0, weight: 0 },
+  ]);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-    index?: number
-  ) => {
-    const { name, value } = e.target;
+  const [exerciseType, setExerciseType] = useState([]);
 
-    if (index !== undefined) {
-      const updatedExercises = [...formData.exercises];
-      updatedExercises[index] = {
-        ...updatedExercises[index],
-        [name]: value,
-      };
-      setFormData({ ...formData, exercises: updatedExercises });
-    } else {
-      setFormData({ ...formData, [name]: value });
-    }
-  };
+  const [message, setMessage] = useState();
 
+  const [muscleGroups, setMuscleGroups] = useState([]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/muscleGroups").then((res) => res.json()),
+      fetch("/api/exerciseTypes").then((res) => res.json()),
+    ])
+      .then(([muscleGroupsData, exerciseTypesData]) => {
+        setMuscleGroups(muscleGroupsData);
+        setExerciseType(exerciseTypesData);
+      })
+      .catch(() => setMessage("Failed to load data"));
+  }, []);
+
+  // Handler to add a new exercise row
   const addExercise = () => {
-    setFormData({
-      ...formData,
-      exercises: [
-        ...formData.exercises,
-        { name: "", sets: 0, reps: 0, weight: 0 },
-      ],
-    });
+    setExercises([...exercises, { type: "", sets: 0, reps: 0, weight: 0 }]);
   };
 
+  // Handler to remove an exercise row
   const removeExercise = (index: number) => {
-    const updatedExercises = formData.exercises.filter((_, i) => i !== index);
-    setFormData({ ...formData, exercises: updatedExercises });
+    const newExercises = exercises.filter((_, i) => i !== index);
+    setExercises(newExercises);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handler to update exercise details
+  const updateExercise = (index: number, field: string, value: any) => {
+    const updatedExercises = exercises.map((exercise, i) =>
+      i === index ? { ...exercise, [field]: value } : exercise
+    );
+    setExercises(updatedExercises);
+  };
+
+  // Placeholder for form submission
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting form data:", formData);
+    console.log("Workout logged:", exercises);
+    // Call your API or backend logic here
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4 bg-white p-6 rounded-md shadow-sm w-full"
-    >
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Workout Details</h2>
+    <div className="bg-white rounded-md shadow-2xl py-4 px-6 mx-6 w-auto">
+      <h1 className="text-2xl font-semibold mb-4">Workout Details</h1>
 
-      <input
-        type="date"
-        name="date"
-        value={formData.date}
-        onChange={handleInputChange}
-        className="p-2 border rounded"
-        required
-      />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <label className="font-medium">Date:</label>
+        <input
+          className="bg-white h-[40px] px-4 rounded-xl shadow-2xl border-2 border-black"
+          type="date"
+        />
 
-      <input
-        type="text"
-        name="workoutType"
-        placeholder="Workout Type (e.g. Strength, Cardio)"
-        value={formData.workoutType}
-        onChange={handleInputChange}
-        className="p-2 border rounded"
-        required
-      />
+        <label className="font-medium">Workout Type:</label>
+        <select className="bg-white  h-[40px] px-4  rounded-xl shadow-2xl border-2 border-black">
+          <option value="">Select Workout type</option>
+          {exerciseType.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
 
-      <input
-        type="text"
-        name="muscleGroups"
-        placeholder="Muscle Groups (comma-separated)"
-        value={formData.muscleGroups}
-        onChange={handleInputChange}
-        className="p-2 border rounded"
-        required
-      />
+        <label className="font-medium">Comments:</label>
+        <textarea
+          className="bg-white px-4 py-2 rounded-xl h-[150px] shadow-2xl border-2 border-black"
+          placeholder="Add any comments about your workout..."
+        ></textarea>
 
-      <textarea
-        name="comments"
-        placeholder="Comments"
-        value={formData.comments}
-        onChange={handleInputChange}
-        className="p-2 border rounded"
-      />
+        <div className="flex flex-col gap-3">
+          <h1 className="text-2xl font-semibold mt-4">Exercises</h1>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold text-gray-800">Exercises</h3>
+          {exercises.map((exercise, index) => (
+            <div key={index} className="flex gap-3 items-center">
+              <select
+                className="bg-white h-[40px] w-full px-4  rounded-xl shadow-2xl border-2 border-black"
+                value={exercise.type}
+                onChange={(e) => updateExercise(index, "type", e.target.value)}
+              >
+                <option value="">Select Exercise type</option>
+                {exerciseType.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
 
-        {formData.exercises.map((exercise, index) => (
-          <div key={index} className="flex flex-wrap gap-2 items-center">
-            <input
-              type="text"
-              name="name"
-              placeholder="Exercise Name"
-              value={exercise.name}
-              onChange={(e) => handleInputChange(e, index)}
-              className="p-2 border rounded flex-grow"
-              required
-            />
-            <input
-              type="number"
-              name="sets"
-              placeholder="Sets"
-              value={exercise.sets}
-              onChange={(e) => handleInputChange(e, index)}
-              className="p-2 border rounded w-16"
-              required
-            />
-            <input
-              type="number"
-              name="reps"
-              placeholder="Reps"
-              value={exercise.reps}
-              onChange={(e) => handleInputChange(e, index)}
-              className="p-2 border rounded w-16"
-              required
-            />
-            <input
-              type="number"
-              name="weight"
-              placeholder="Weight (kg)"
-              value={exercise.weight}
-              onChange={(e) => handleInputChange(e, index)}
-              className="p-2 border rounded w-20"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => removeExercise(index)}
-              className="text-red-600 hover:text-red-800"
-            >
-              ✖
-            </button>
-          </div>
-        ))}
+              <label htmlFor="">Sets</label>
+              <input
+                className="bg-white h-[40px] px-4 w-12 rounded-xl shadow-2xl border-2 border-black"
+                type="number"
+                value={exercise.sets}
+                onChange={(e) =>
+                  updateExercise(index, "sets", parseInt(e.target.value))
+                }
+              />
 
-        <button
-          type="button"
-          onClick={addExercise}
-          className="p-2 bg-blue-500 text-white rounded mt-2 hover:bg-blue-600"
-        >
-          ➕ Add Exercise
-        </button>
-      </div>
+              <label htmlFor="">Reps</label>
+              <input
+                className="bg-white h-[40px] px-4 w-12 rounded-xl shadow-2xl border-2 border-black"
+                type="number"
+                value={exercise.reps}
+                onChange={(e) =>
+                  updateExercise(index, "reps", parseInt(e.target.value))
+                }
+              />
 
-      <button
-        type="submit"
-        className="p-3 bg-green-500 text-white rounded mt-4 hover:bg-green-600"
-      >
-        Save Workout
-      </button>
-    </form>
+              <label htmlFor="">Weight</label>
+              <input
+                className="bg-white h-[40px] w-12 px-4 rounded-xl shadow-2xl border-2 border-black"
+                type="number"
+                value={exercise.weight}
+                onChange={(e) =>
+                  updateExercise(index, "weight", parseFloat(e.target.value))
+                }
+              />
+
+              <button
+                type="button"
+                onClick={() => removeExercise(index)}
+                className="text-red-500 font-bold"
+              >
+                X
+              </button>
+            </div>
+          ))}
+
+          <button
+            type="button"
+            onClick={addExercise}
+            className="w-full bg-green-500 rounded-sm text-white py-2 mt-3"
+          >
+            + Add exercise
+          </button>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 rounded-sm text-white py-2 mt-5"
+          >
+            Save Workout
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
