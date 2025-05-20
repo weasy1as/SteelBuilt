@@ -47,12 +47,25 @@ export default async function Home() {
       }
     : null;
 
-  // Example personal best data
-  const personalBestData = {
-    exercise: "Bench Press",
-    weight: 100,
-    reps: 8,
-  };
+  // ✅ Fetch personal best
+  const personalBest = await prisma.personalBest.findFirst({
+    where: { userId: session.user?.id },
+    orderBy: { id: "desc" }, // or by updatedAt if needed
+  });
+
+  const personalBestData = personalBest
+    ? {
+        exercise: personalBest.exercise,
+        weight: personalBest.weight,
+        reps: personalBest.reps,
+      }
+    : null;
+
+  // ✅ Fetch current goal
+  const goal = await prisma.goal.findFirst({
+    where: { userId: session.user?.id },
+    orderBy: { updatedAt: "desc" },
+  });
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
@@ -64,7 +77,7 @@ export default async function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {lastWorkoutData && <Card type="workout" data={lastWorkoutData} />}
           <Card type="personalBest" data={personalBestData} />
-          <Goal />
+          <Goal goal={goal} />
         </div>
 
         <div>
