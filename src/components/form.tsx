@@ -1,29 +1,32 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { Session } from "next-auth";
+import React, { FormEvent, useEffect, useState } from "react";
 
-const Form = () => {
+const Form = ({ session }: { session: Session | null }) => {
   const [exercises, setExercises] = useState([
     { type: "", sets: 0, reps: 0, weight: 0 },
   ]);
 
   const [exerciseType, setExerciseType] = useState([]);
 
-  const [message, setMessage] = useState();
+  const [message, setMessage] = useState("");
 
-  const [muscleGroups, setMuscleGroups] = useState([]);
+  const [workoutTypes, setWorkoutTypes] = useState([]);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/muscleGroups").then((res) => res.json()),
+      fetch("/api/workoutTypes").then((res) => res.json()),
       fetch("/api/exerciseTypes").then((res) => res.json()),
     ])
       .then(([muscleGroupsData, exerciseTypesData]) => {
-        setMuscleGroups(muscleGroupsData);
+        setWorkoutTypes(muscleGroupsData);
         setExerciseType(exerciseTypesData);
       })
       .catch(() => setMessage("Failed to load data"));
   }, []);
+
+  console.log(exerciseType);
 
   // Handler to add a new exercise row
   const addExercise = () => {
@@ -45,11 +48,38 @@ const Form = () => {
   };
 
   // Placeholder for form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Workout logged:", exercises);
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const workout = {
+      userId: session?.user?.id,
+      date: formData.get("date"),
+      comments: formData.get("comments"),
+      workoutTypeId: formData.get("workoutType"), // assuming this is an ID
+      exercises: exercises.map((e) => ({
+        sets: e.sets,
+        reps: e.reps,
+        weight: e.weight,
+        exerciseTypeId: e.type, // make sure `e.type` is the ID
+      })),
+    };
+    const response = await fetch("/api/workouts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(workout),
+    });
+
+    if (response.ok) {
+      // Handle response if necessary
+      const data = await response.json();
+
+      console.log("Workout logged:", data);
+    }
+
     // Call your API or backend logic here
-  };
+  }
 
   return (
     <div className="bg-white rounded-md shadow-2xl py-4 px-6 mx-6 w-auto">
@@ -58,22 +88,27 @@ const Form = () => {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <label className="font-medium">Date:</label>
         <input
+          name="date"
           className="bg-white h-[40px] px-4 rounded-xl shadow-2xl border-2 border-black"
           type="date"
         />
 
         <label className="font-medium">Workout Type:</label>
-        <select className="bg-white  h-[40px] px-4  rounded-xl shadow-2xl border-2 border-black">
+        <select
+          name="workoutType"
+          className="bg-white h-[40px] px-4 rounded-xl shadow-2xl border-2 border-black"
+        >
           <option value="">Select Workout type</option>
-          {exerciseType.map((type) => (
-            <option key={type} value={type}>
-              {type}
+          {workoutTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.name}
             </option>
           ))}
         </select>
 
         <label className="font-medium">Comments:</label>
         <textarea
+          name="comments"
           className="bg-white px-4 py-2 rounded-xl h-[150px] shadow-2xl border-2 border-black"
           placeholder="Add any comments about your workout..."
         ></textarea>
@@ -84,21 +119,21 @@ const Form = () => {
           {exercises.map((exercise, index) => (
             <div key={index} className="flex gap-3 items-center">
               <select
-                className="bg-white h-[40px] w-full px-4  rounded-xl shadow-2xl border-2 border-black"
+                className="bg-white h-[40px] w-full px-4 rounded-xl shadow-2xl border-2 border-black"
                 value={exercise.type}
                 onChange={(e) => updateExercise(index, "type", e.target.value)}
               >
                 <option value="">Select Exercise type</option>
                 {exerciseType.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
+                  <option key={type.id} value={type.id}>
+                    {type.name}
                   </option>
                 ))}
               </select>
 
-              <label htmlFor="">Sets</label>
+              <label>Sets</label>
               <input
-                className="bg-white h-[40px] px-4 w-12 rounded-xl shadow-2xl border-2 border-black"
+                className="bg-white text-black h-[40px] px-4 w-14 rounded-xl shadow-2xl border-2 border-black"
                 type="number"
                 value={exercise.sets}
                 onChange={(e) =>
@@ -106,9 +141,9 @@ const Form = () => {
                 }
               />
 
-              <label htmlFor="">Reps</label>
+              <label>Reps</label>
               <input
-                className="bg-white h-[40px] px-4 w-12 rounded-xl shadow-2xl border-2 border-black"
+                className="bg-white h-[40px] px-4 w-14 rounded-xl shadow-2xl border-2 border-black"
                 type="number"
                 value={exercise.reps}
                 onChange={(e) =>
@@ -116,9 +151,9 @@ const Form = () => {
                 }
               />
 
-              <label htmlFor="">Weight</label>
+              <label>Weight</label>
               <input
-                className="bg-white h-[40px] w-12 px-4 rounded-xl shadow-2xl border-2 border-black"
+                className="bg-white h-[40px] w-14 px-4 rounded-xl shadow-2xl border-2 border-black"
                 type="number"
                 value={exercise.weight}
                 onChange={(e) =>
@@ -148,7 +183,7 @@ const Form = () => {
         <div>
           <button
             type="submit"
-            className="w-full bg-blue-500 rounded-sm text-white py-2 mt-5"
+            className="w-full cursor-pointer bg-blue-500 rounded-sm text-white py-2 mt-5"
           >
             Save Workout
           </button>

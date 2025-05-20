@@ -18,7 +18,7 @@ export default async function Page() {
         </h1>
 
         <div className="w-full ">
-          <Form />
+          <Form session={session} />
         </div>
       </div>
     </div>

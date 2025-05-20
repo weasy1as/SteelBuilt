@@ -28,7 +28,6 @@ model Workout {
   userId        String
   user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   date          DateTime
-  type          String
   comments      String?
   workoutTypeId String?
   workoutType   WorkoutType? @relation(fields: [workoutTypeId], references: [id])
