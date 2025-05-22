@@ -1,4 +1,5 @@
-import { signIn } from "@/auth";
+"use client";
+import { signIn } from "next-auth/react";
 
 export default function SignIn() {
   return (
@@ -13,20 +14,13 @@ export default function SignIn() {
         </p>
       </div>
 
-      <form
-        action={async () => {
-          "use server";
-          await signIn("google");
-        }}
-        className="flex flex-col items-center"
+      <button
+        type="submit"
+        onClick={() => signIn("google")}
+        className="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg"
       >
-        <button
-          type="submit"
-          className="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg"
-        >
-          Sign In with Google
-        </button>
-      </form>
+        Sign In with Google
+      </button>
     </div>
   );
 }

@@ -94,6 +94,8 @@ model PersonalBest {
   reps     Int
   userId   String
   user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([userId, exercise])
 }
 
 model Account {

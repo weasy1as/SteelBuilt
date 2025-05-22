@@ -2,6 +2,7 @@
 
 import React, { FormEvent, useEffect, useState } from "react";
 import { Session } from "next-auth";
+import toast from "react-hot-toast";
 
 interface Exercise {
   type: string;
@@ -117,8 +118,17 @@ const Form = ({ session }: { session: Session | null }) => {
         throw new Error("Failed to save workout");
       }
 
-      const data = await response.json();
-      setMessage("Workout logged successfully!");
+      const result = await response.json();
+
+      if (result.newPersonalBests?.length > 0) {
+        result.newPersonalBests.forEach((pb) => {
+          toast.success(
+            `🔥 New Personal Best: ${pb.exercise} - ${pb.weight} kg x ${pb.reps} reps`
+          );
+        });
+      } else {
+        toast.success("Workout logged successfully!");
+      }
       setExercises([{ type: "", sets: "", reps: "", weight: "" }]);
       form.reset();
     } catch (error) {

@@ -48,18 +48,15 @@ export default async function Home() {
     : null;
 
   // ✅ Fetch personal best
-  const personalBest = await prisma.personalBest.findFirst({
+  const personalBestData = await prisma.personalBest.findMany({
     where: { userId: session.user?.id },
-    orderBy: { id: "desc" }, // or by updatedAt if needed
+    orderBy: { id: "desc" }, // Or by exercise name if preferred
+    select: {
+      exercise: true,
+      weight: true,
+      reps: true,
+    },
   });
-
-  const personalBestData = personalBest
-    ? {
-        exercise: personalBest.exercise,
-        weight: personalBest.weight,
-        reps: personalBest.reps,
-      }
-    : null;
 
   // ✅ Fetch current goal
   const goal = await prisma.goal.findFirst({
