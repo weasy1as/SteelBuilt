@@ -1,172 +1,326 @@
 "use client";
 
-import { Session } from "next-auth";
 import React, { FormEvent, useEffect, useState } from "react";
+import { Session } from "next-auth";
+
+interface Exercise {
+  type: string;
+  sets: number | "";
+  reps: number | "";
+  weight: number | "";
+}
+
+interface WorkoutType {
+  id: string;
+  name: string;
+}
+
+interface ExerciseType {
+  id: string;
+  name: string;
+}
 
 const Form = ({ session }: { session: Session | null }) => {
-  const [exercises, setExercises] = useState([
-    { type: "", sets: 0, reps: 0, weight: 0 },
+  const [exercises, setExercises] = useState<Exercise[]>([
+    { type: "", sets: "", reps: "", weight: "" },
   ]);
 
-  const [exerciseType, setExerciseType] = useState([]);
-
-  const [message, setMessage] = useState("");
-
-  const [workoutTypes, setWorkoutTypes] = useState([]);
+  const [exerciseTypes, setExerciseTypes] = useState<ExerciseType[]>([]);
+  const [workoutTypes, setWorkoutTypes] = useState<WorkoutType[]>([]);
+  const [message, setMessage] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    Promise.all([
-      fetch("/api/workoutTypes").then((res) => res.json()),
-      fetch("/api/exerciseTypes").then((res) => res.json()),
-    ])
-      .then(([muscleGroupsData, exerciseTypesData]) => {
-        setWorkoutTypes(muscleGroupsData);
-        setExerciseType(exerciseTypesData);
-      })
-      .catch(() => setMessage("Failed to load data"));
+    async function fetchData() {
+      try {
+        const [workoutRes, exerciseRes] = await Promise.all([
+          fetch("/api/workoutTypes"),
+          fetch("/api/exerciseTypes"),
+        ]);
+        if (!workoutRes.ok || !exerciseRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+        const workoutData: WorkoutType[] = await workoutRes.json();
+        const exerciseData: ExerciseType[] = await exerciseRes.json();
+
+        setWorkoutTypes(workoutData);
+        setExerciseTypes(exerciseData);
+      } catch (err) {
+        setMessage("Failed to load data. Please try again later.");
+      }
+    }
+    fetchData();
   }, []);
 
-  console.log(exerciseType);
-
-  // Handler to add a new exercise row
   const addExercise = () => {
-    setExercises([...exercises, { type: "", sets: 0, reps: 0, weight: 0 }]);
+    setExercises([...exercises, { type: "", sets: "", reps: "", weight: "" }]);
   };
 
-  // Handler to remove an exercise row
   const removeExercise = (index: number) => {
-    const newExercises = exercises.filter((_, i) => i !== index);
-    setExercises(newExercises);
+    setExercises(exercises.filter((_, i) => i !== index));
   };
 
-  // Handler to update exercise details
-  const updateExercise = (index: number, field: string, value: any) => {
-    const updatedExercises = exercises.map((exercise, i) =>
-      i === index ? { ...exercise, [field]: value } : exercise
+  const updateExercise = (
+    index: number,
+    field: keyof Exercise,
+    value: string | number
+  ) => {
+    const updated = exercises.map((ex, i) =>
+      i === index ? { ...ex, [field]: value } : ex
     );
-    setExercises(updatedExercises);
+    setExercises(updated);
   };
 
-  // Placeholder for form submission
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setMessage("");
+    setLoading(true);
 
-    const workout = {
-      userId: session?.user?.id,
-      date: formData.get("date"),
-      comments: formData.get("comments"),
-      workoutTypeId: formData.get("workoutType"), // assuming this is an ID
-      exercises: exercises.map((e) => ({
-        sets: e.sets,
-        reps: e.reps,
-        weight: e.weight,
-        exerciseTypeId: e.type, // make sure `e.type` is the ID
-      })),
-    };
-    const response = await fetch("/api/workouts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(workout),
-    });
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
 
-    if (response.ok) {
-      // Handle response if necessary
+      // Validate exercises before submitting
+      for (const ex of exercises) {
+        if (!ex.type || ex.sets === "" || ex.reps === "" || ex.weight === "") {
+          setMessage("Please fill all exercise fields.");
+          setLoading(false);
+          return;
+        }
+        if (Number(ex.sets) <= 0 || Number(ex.reps) <= 0) {
+          setMessage("Sets and reps must be greater than zero.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      const workout = {
+        userId: session?.user?.id,
+        date: formData.get("date"),
+        comments: formData.get("comments"),
+        workoutTypeId: formData.get("workoutType"),
+        exercises: exercises.map((e) => ({
+          sets: Number(e.sets),
+          reps: Number(e.reps),
+          weight: Number(e.weight),
+          exerciseTypeId: e.type,
+        })),
+      };
+
+      const response = await fetch("/api/workouts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(workout),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save workout");
+      }
+
       const data = await response.json();
-
-      console.log("Workout logged:", data);
+      setMessage("Workout logged successfully!");
+      setExercises([{ type: "", sets: "", reps: "", weight: "" }]);
+      form.reset();
+    } catch (error) {
+      setMessage((error as Error).message || "An error occurred");
+    } finally {
+      setLoading(false);
     }
-
-    // Call your API or backend logic here
-  }
+  };
 
   return (
-    <div className="bg-white rounded-md shadow-2xl py-4 px-6 mx-6 w-auto">
-      <h1 className="text-2xl font-semibold mb-4">Workout Details</h1>
+    <div className="bg-white rounded-lg shadow-xl py-6 px-8 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-semibold mb-6 text-gray-900">
+        Workout Details
+      </h1>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <label className="font-medium">Date:</label>
-        <input
-          name="date"
-          className="bg-white h-[40px] px-4 rounded-xl shadow-2xl border-2 border-black"
-          type="date"
-        />
-
-        <label className="font-medium">Workout Type:</label>
-        <select
-          name="workoutType"
-          className="bg-white h-[40px] px-4 rounded-xl shadow-2xl border-2 border-black"
+      {message && (
+        <div
+          role="alert"
+          className={`mb-4 p-3 rounded ${
+            message.includes("success")
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
         >
-          <option value="">Select Workout type</option>
-          {workoutTypes.map((type) => (
-            <option key={type.id} value={type.id}>
-              {type.name}
+          {message}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <div>
+          <label
+            htmlFor="date"
+            className="block mb-1 font-medium text-gray-700"
+          >
+            Date <span className="text-red-500">*</span>
+          </label>
+          <input
+            id="date"
+            name="date"
+            type="date"
+            required
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="workoutType"
+            className="block mb-1 font-medium text-gray-700"
+          >
+            Workout Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            id="workoutType"
+            name="workoutType"
+            required
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Select Workout type
             </option>
-          ))}
-        </select>
+            {workoutTypes.map(({ id, name }) => (
+              <option key={id} value={id}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <label className="font-medium">Comments:</label>
-        <textarea
-          name="comments"
-          className="bg-white px-4 py-2 rounded-xl h-[150px] shadow-2xl border-2 border-black"
-          placeholder="Add any comments about your workout..."
-        ></textarea>
+        <div>
+          <label
+            htmlFor="comments"
+            className="block mb-1 font-medium text-gray-700"
+          >
+            Comments
+          </label>
+          <textarea
+            id="comments"
+            name="comments"
+            placeholder="Add any comments about your workout..."
+            rows={4}
+            className="w-full rounded-lg border-2 border-gray-300 px-4 py-2 resize-none focus:border-blue-500 focus:outline-none"
+          ></textarea>
+        </div>
 
-        <div className="flex flex-col gap-3">
-          <h1 className="text-2xl font-semibold mt-4">Exercises</h1>
+        <section aria-label="Exercises" className="mt-6">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-900">
+            Exercises
+          </h2>
 
-          {exercises.map((exercise, index) => (
-            <div key={index} className="flex gap-3 items-center">
-              <select
-                className="bg-white h-[40px] w-full px-4 rounded-xl shadow-2xl border-2 border-black"
-                value={exercise.type}
-                onChange={(e) => updateExercise(index, "type", e.target.value)}
-              >
-                <option value="">Select Exercise type</option>
-                {exerciseType.map((type) => (
-                  <option key={type.id} value={type.id}>
-                    {type.name}
+          {exercises.map((exercise, idx) => (
+            <div
+              key={idx}
+              className="flex flex-wrap items-center gap-4 mb-4 border rounded-lg p-4 bg-gray-50"
+            >
+              <div className="flex-1 min-w-[150px]">
+                <label
+                  htmlFor={`exerciseType-${idx}`}
+                  className="block mb-1 font-medium text-gray-700"
+                >
+                  Exercise Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id={`exerciseType-${idx}`}
+                  value={exercise.type}
+                  onChange={(e) => updateExercise(idx, "type", e.target.value)}
+                  required
+                  className="w-full rounded-lg border-2 border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="" disabled>
+                    Select Exercise type
                   </option>
-                ))}
-              </select>
+                  {exerciseTypes.map(({ id, name }) => (
+                    <option key={id} value={id}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-              <label>Sets</label>
-              <input
-                className="bg-white text-black h-[40px] px-4 w-14 rounded-xl shadow-2xl border-2 border-black"
-                type="number"
-                value={exercise.sets}
-                onChange={(e) =>
-                  updateExercise(index, "sets", parseInt(e.target.value))
-                }
-              />
+              <div className="flex flex-col min-w-[70px]">
+                <label
+                  htmlFor={`sets-${idx}`}
+                  className="mb-1 font-medium text-gray-700"
+                >
+                  Sets <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id={`sets-${idx}`}
+                  type="number"
+                  min={1}
+                  value={exercise.sets}
+                  onChange={(e) =>
+                    updateExercise(
+                      idx,
+                      "sets",
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                  required
+                  className="rounded-lg border-2 border-gray-300 px-3 py-2 w-full focus:border-blue-500 focus:outline-none"
+                />
+              </div>
 
-              <label>Reps</label>
-              <input
-                className="bg-white h-[40px] px-4 w-14 rounded-xl shadow-2xl border-2 border-black"
-                type="number"
-                value={exercise.reps}
-                onChange={(e) =>
-                  updateExercise(index, "reps", parseInt(e.target.value))
-                }
-              />
+              <div className="flex flex-col min-w-[70px]">
+                <label
+                  htmlFor={`reps-${idx}`}
+                  className="mb-1 font-medium text-gray-700"
+                >
+                  Reps <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id={`reps-${idx}`}
+                  type="number"
+                  min={1}
+                  value={exercise.reps}
+                  onChange={(e) =>
+                    updateExercise(
+                      idx,
+                      "reps",
+                      e.target.value === "" ? "" : Number(e.target.value)
+                    )
+                  }
+                  required
+                  className="rounded-lg border-2 border-gray-300 px-3 py-2 w-full focus:border-blue-500 focus:outline-none"
+                />
+              </div>
 
-              <label>Weight</label>
-              <input
-                className="bg-white h-[40px] w-14 px-4 rounded-xl shadow-2xl border-2 border-black"
-                type="number"
-                value={exercise.weight}
-                onChange={(e) =>
-                  updateExercise(index, "weight", parseFloat(e.target.value))
-                }
-              />
+              <div className="flex flex-col min-w-[90px]">
+                <label
+                  htmlFor={`weight-${idx}`}
+                  className="mb-1 font-medium text-gray-700"
+                >
+                  Weight (kg) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id={`weight-${idx}`}
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={exercise.weight}
+                  onChange={(e) =>
+                    updateExercise(
+                      idx,
+                      "weight",
+                      e.target.value === "" ? "" : parseFloat(e.target.value)
+                    )
+                  }
+                  required
+                  className="rounded-lg border-2 border-gray-300 px-3 py-2 w-full focus:border-blue-500 focus:outline-none"
+                />
+              </div>
 
               <button
                 type="button"
-                onClick={() => removeExercise(index)}
-                className="text-red-500 font-bold"
+                aria-label={`Remove exercise ${idx + 1}`}
+                onClick={() => removeExercise(idx)}
+                className="text-red-600 hover:text-red-800 transition rounded-full p-1 focus:outline-none focus:ring-2 focus:ring-red-500"
+                title="Remove exercise"
               >
-                X
+                ✕
               </button>
             </div>
           ))}
@@ -174,20 +328,23 @@ const Form = ({ session }: { session: Session | null }) => {
           <button
             type="button"
             onClick={addExercise}
-            className="w-full bg-green-500 rounded-sm text-white py-2 mt-3"
+            className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-2 font-semibold transition focus:outline-none focus:ring-4 focus:ring-green-400"
           >
-            + Add exercise
+            + Add Exercise
           </button>
-        </div>
+        </section>
 
-        <div>
-          <button
-            type="submit"
-            className="w-full cursor-pointer bg-blue-500 rounded-sm text-white py-2 mt-5"
-          >
-            Save Workout
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full mt-6 py-3 font-semibold rounded-lg text-white transition focus:outline-none focus:ring-4 ${
+            loading
+              ? "bg-blue-300 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
+          }`}
+        >
+          {loading ? "Saving..." : "Save Workout"}
+        </button>
       </form>
     </div>
   );

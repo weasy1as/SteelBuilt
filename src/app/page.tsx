@@ -67,9 +67,21 @@ export default async function Home() {
     orderBy: { updatedAt: "desc" },
   });
 
+  const history = await prisma.workout.findMany({
+    where: { userId: session.user?.id },
+    orderBy: { date: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      date: true,
+      workoutType: { select: { name: true } },
+      exercises: true,
+    },
+  });
+
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
-      <div className="w-full md:w-1/5">
+    <div className="flex flex-col items-center min-h-screen bg-gray-100">
+      <div className="w-full">
         <Sidebar session={session} />
       </div>
 
@@ -81,7 +93,7 @@ export default async function Home() {
         </div>
 
         <div>
-          <History />
+          <History history={history} />
         </div>
       </div>
     </div>

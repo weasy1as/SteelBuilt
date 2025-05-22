@@ -1,96 +1,95 @@
 "use client";
 
 import { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
-import React, { useState } from "react";
+import { useState } from "react";
+import { FaBars, FaTimes, FaUserCircle } from "react-icons/fa";
 
 const Sidebar = ({ session }: { session: Session | null }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSignOut = async () => {
     await fetch("/api/signout", { method: "POST" });
-    window.location.reload();
   };
 
+  const toggleMenu = () => setIsOpen((prev) => !prev);
+
   return (
-    <div>
-      {/* Burger Menu Button (Mobile Only) */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="md:hidden p-4 text-white bg-gray-900 fixed top-0 left-0 z-50"
-      >
-        {isOpen ? "✖" : "☰"}
-      </button>
+    <nav className="w-full bg-gradient-to-r from-blue-500 to-purple-600 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+        {/* Brand */}
+        <Link href="/" className="text-white text-2xl font-bold tracking-tight">
+          SteelBuilt
+        </Link>
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col max-w-[300px] h-screen bg-gradient-to-br from-gray-900 to-black text-white">
-        {/* Logo/Header */}
-        <div className="py-6 px-4 flex flex-col items-center">
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">
-            <span>🏋️</span> SteelBuilt
-          </h1>
-        </div>
+        {/* Desktop Menu */}
+        <ul className="hidden md:flex gap-6 text-white font-medium">
+          <li>
+            <Link href="/">Home</Link>
+          </li>{" "}
+          <li>
+            <Link href="/log">Log workout</Link>
+          </li>
+          <li>
+            <Link href="/profile">Profile</Link>
+          </li>
+        </ul>
 
-        {/* Navigation */}
-        <div className="flex-1 px-4">
-          <ul className="flex flex-col gap-4">
-            <li className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
-              <Link href="/">Home</Link>
-            </li>
-            <li className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
-              <Link href="/log">Log workout</Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Footer */}
-        <div className="px-4 py-6 flex flex-col items-center space-y-4">
-          <p className="text-gray-200 text-lg font-semibold text-center">
-            Signed in as{" "}
-            <span className="font-bold text-blue-600">
-              {session?.user?.name}
-            </span>
-          </p>
+        {/* User info and sign out */}
+        <div className="hidden md:flex items-center gap-4 text-white">
+          <div className="flex items-center gap-2">
+            {session?.user?.image ? (
+              <img
+                src={session.user.image}
+                alt="User avatar"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <FaUserCircle className="text-2xl" />
+            )}
+            <p className="font-semibold">{session?.user?.name || "User"}</p>
+          </div>
           <button
-            onClick={handleSignOut}
-            className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500"
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-4 py-2 rounded-xl transition"
           >
             Sign out
           </button>
         </div>
+
+        {/* Mobile Toggle */}
+        <button onClick={toggleMenu} className="md:hidden text-white text-2xl">
+          {isOpen ? <FaTimes /> : <FaBars />}
+        </button>
       </div>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden fixed top-0 left-0 w-full h-screen bg-gradient-to-br from-gray-900 to-black text-white z-40">
-          <div className="flex flex-col justify-center h-full p-6">
-            <ul className="flex flex-col gap-4">
-              <li className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
-                <Link href="/">Home</Link>
-              </li>
-              <li className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
-                <Link href="/log">Log workout</Link>
-              </li>
-            </ul>
+        <div className="md:hidden bg-blue-600 text-white px-4 pb-4 pt-2 space-y-3">
+          <Link href="/" className="block">
+            Home
+          </Link>
+          <Link href="/log" className="block">
+            Log workout
+          </Link>
+          <Link href="/profile" className="block">
+            Profile
+          </Link>
 
-            <div className="mt-8 text-center">
-              <p className="text-gray-200 text-lg font-semibold">
-                Signed in as{" "}
-                <span className="font-bold text-blue-600">
-                  {session?.user?.name}
-                </span>
-              </p>
-              <button
-                onClick={handleSignOut}
-                className="w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold text-lg rounded-xl mt-4 transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-red-500"
-              >
-                Sign out
-              </button>
-            </div>
+          <div className="pt-4 border-t border-white/20">
+            <p className="text-sm">Signed in as:</p>
+            <p className="font-semibold">{session?.user?.name || "User"}</p>
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="mt-2 bg-red-500 hover:bg-red-600 w-full text-white px-4 py-2 rounded-xl transition"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       )}
-    </div>
+    </nav>
   );
 };
 

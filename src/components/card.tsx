@@ -1,16 +1,10 @@
-import React from "react";
-import {
-  FaCalendarAlt,
-  FaDumbbell,
-  FaClipboardList,
-  FaComments,
-} from "react-icons/fa";
+"use client";
 
 interface WorkoutData {
   date: string;
   workoutType: string;
   muscleGroups: string[];
-  comments: string;
+  comments?: string;
 }
 
 interface PersonalBestData {
@@ -19,68 +13,73 @@ interface PersonalBestData {
   reps: number;
 }
 
-const Card = ({
-  type,
-  data,
-}: {
+interface WorkoutCardProps {
   type: "workout" | "personalBest";
-  data: WorkoutData | PersonalBestData;
-}) => {
-  return (
-    <div className="flex flex-col items-center justify-between py-6 w-full sm:w-[350px] p-4 bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600 mb-4">
-        {type === "workout" ? "Last Workout" : "Personal Best"}
-      </h1>
+  data: WorkoutData | PersonalBestData | null;
+}
 
-      <div className="w-full mt-2 space-y-3">
-        {type === "workout" ? (
-          <>
-            <div className="flex items-center gap-2">
-              <FaCalendarAlt className="text-blue-500" />
-              <p className="font-medium text-gray-700">Date: {data.date}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaDumbbell className="text-purple-500" />
-              <p className="font-medium text-gray-700">
-                Workout Type: {data.workoutType}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaClipboardList className="text-green-500" />
-              <p className="font-medium text-gray-700">
-                Muscle Groups: {data.muscleGroups.join(", ")}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaComments className="text-yellow-500" />
-              <p className="font-medium text-gray-700">
-                Comments: {data.comments}
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex items-center gap-2">
-              <FaDumbbell className="text-purple-500" />
-              <p className="font-medium text-gray-700">
-                Exercise: {data.exercise}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaDumbbell className="text-green-500" />
-              <p className="font-medium text-gray-700">
-                Weight: {data.weight} kg
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <FaDumbbell className="text-yellow-500" />
-              <p className="font-medium text-gray-700">Reps: {data.reps}</p>
-            </div>
-          </>
-        )}
-      </div>
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div
+      role="alert"
+      className="bg-gray-50 text-gray-500 rounded-xl p-6 shadow text-center"
+    >
+      {message}
     </div>
   );
-};
+}
 
-export default Card;
+export default function Card({ type, data }: WorkoutCardProps) {
+  if (!data) {
+    return (
+      <EmptyState
+        message={`No ${
+          type === "workout" ? "workout" : "personal best"
+        } data found.`}
+      />
+    );
+  }
+
+  return (
+    <article
+      aria-label={type === "workout" ? "Last Workout" : "Personal Best"}
+      className="bg-black rounded-xl p-6 shadow-md space-y-4 text-white"
+    >
+      <h3 className="text-xl font-semibold">
+        {type === "workout" ? "Last Workout" : "Personal Best"}
+      </h3>
+
+      {type === "workout" ? (
+        <>
+          <p>
+            <strong>Date:</strong> {(data as WorkoutData).date}
+          </p>
+          <p>
+            <strong>Type:</strong> {(data as WorkoutData).workoutType}
+          </p>
+          <p>
+            <strong>Muscles:</strong>{" "}
+            {(data as WorkoutData).muscleGroups.join(", ")}
+          </p>
+          {(data as WorkoutData).comments && (
+            <p className="italic text-sm text-gray-600">
+              "{(data as WorkoutData).comments}"
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <p>
+            <strong>Exercise:</strong> {(data as PersonalBestData).exercise}
+          </p>
+          <p>
+            <strong>Weight:</strong> {(data as PersonalBestData).weight} kg
+          </p>
+          <p>
+            <strong>Reps:</strong> {(data as PersonalBestData).reps}
+          </p>
+        </>
+      )}
+    </article>
+  );
+}

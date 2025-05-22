@@ -7,12 +7,12 @@ export default async function Page() {
   const session = await auth();
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-gray-100">
-      <div className="flex-1 w-auto">
+    <div className="w-full bg-gray-100">
+      <div className="w-full">
         <Sidebar session={session} />
       </div>
 
-      <div className="flex-3 flex flex-col justify-center items-center  p-4">
+      <div className=" flex flex-col justify-center items-center  p-4">
         <h1 className="text-center text-4xl font-semibold py-4 text-gray-800">
           Log Workout
         </h1>
