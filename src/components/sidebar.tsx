@@ -41,6 +41,8 @@ const Sidebar = ({ session }: { session: Session | null }) => {
                 src={session.user.image}
                 alt="User avatar"
                 className="w-8 h-8 rounded-full object-cover"
+                width={32}
+                height={32}
               />
             ) : (
               <FaUserCircle className="text-2xl" />
