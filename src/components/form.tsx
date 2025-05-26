@@ -11,6 +11,14 @@ interface Exercise {
   weight: number | "";
 }
 
+export interface PersonalBest {
+  id: string;
+  exercise: string; // name of the exercise
+  weight: number;
+  reps: number;
+  userId: string;
+}
+
 interface WorkoutType {
   id: string;
   name: string;
@@ -46,7 +54,7 @@ const Form = ({ session }: { session: Session | null }) => {
 
         setWorkoutTypes(workoutData);
         setExerciseTypes(exerciseData);
-      } catch (e) {
+      } catch {
         setMessage("Failed to load data. Please try again later.");
       }
     }
@@ -121,7 +129,7 @@ const Form = ({ session }: { session: Session | null }) => {
       const result = await response.json();
 
       if (result.newPersonalBests?.length > 0) {
-        result.newPersonalBests.forEach((pb) => {
+        result.newPersonalBests.forEach((pb: PersonalBest) => {
           toast.success(
             `🔥 New Personal Best: ${pb.exercise} - ${pb.weight} kg x ${pb.reps} reps`
           );

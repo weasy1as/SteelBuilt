@@ -54,8 +54,8 @@ const AddExerciseTypePage = () => {
       setMessage("Exercise type added successfully!");
       setName("");
       setSelectedMuscleGroups([]);
-    } catch (error) {
-      setMessage(error.message || "Something went wrong");
+    } catch {
+      setMessage("Something went wrong");
     }
   };
 

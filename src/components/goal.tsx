@@ -5,9 +5,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface GoalData {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
   title: string;
-  description?: string;
-  targetDate?: string;
+  description: string | null;
+  targetDate: Date | null;
   achieved: boolean;
 }
 

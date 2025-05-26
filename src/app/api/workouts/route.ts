@@ -1,6 +1,17 @@
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
 
+export interface Exercise {
+  id: string;
+  workoutId: string;
+  exerciseTypeId: string;
+  sets: number;
+  reps: number;
+  weight: number;
+  createdAt: string; // or Date if using JS Date objects
+  updatedAt: string;
+}
+
 export async function POST(req: Request) {
   try {
     const data = await req.json();
@@ -15,7 +26,7 @@ export async function POST(req: Request) {
         },
         user: { connect: { id: data.userId } },
         exercises: {
-          create: data.exercises.map((e) => ({
+          create: data.exercises.map((e: Exercise) => ({
             sets: e.sets,
             reps: e.reps,
             weight: e.weight,

@@ -1,10 +1,19 @@
 "use client";
 
 interface HistoryEntry {
+  date: Date;
+  workoutType: { name: string } | null;
+  exercises: {
+    sets: number;
+    reps: number;
+    weight: number;
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    exerciseTypeId: string;
+    workoutId: string;
+  }[];
   id: string;
-  date: string;
-  workoutType?: { name: string };
-  exercises: any[]; // You can define a type if you want
 }
 
 export default function History({ history }: { history: HistoryEntry[] }) {

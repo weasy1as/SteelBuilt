@@ -2,6 +2,7 @@
 
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { FaBars, FaTimes, FaUserCircle } from "react-icons/fa";
@@ -36,7 +37,7 @@ const Sidebar = ({ session }: { session: Session | null }) => {
         <div className="hidden md:flex items-center gap-4 text-white">
           <div className="flex items-center gap-2">
             {session?.user?.image ? (
-              <img
+              <Image
                 src={session.user.image}
                 alt="User avatar"
                 className="w-8 h-8 rounded-full object-cover"

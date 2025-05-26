@@ -34,6 +34,15 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export default function Card({ type, data }: WorkoutCardProps) {
+  const [current, setCurrent] = useState(0);
+  const personalBests = data as PersonalBestData[];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent((prev) => (prev + 1) % personalBests.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [personalBests.length]);
+
   if (
     !data ||
     (type === "personalBest" && (data as PersonalBestData[]).length === 0)
@@ -65,21 +74,11 @@ export default function Card({ type, data }: WorkoutCardProps) {
           <strong>Muscles:</strong> {workout.muscleGroups.join(", ")}
         </p>
         {workout.comments && (
-          <p className="italic text-sm text-gray-400">"{workout.comments}"</p>
+          <p className="italic text-sm text-gray-400">{workout.comments}</p>
         )}
       </article>
     );
   }
-
-  const personalBests = data as PersonalBestData[];
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % personalBests.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [personalBests.length]);
 
   const pb = personalBests[current];
 
@@ -119,7 +118,7 @@ export default function Card({ type, data }: WorkoutCardProps) {
           className=" sm:bg-blue-400 px-4 py-2 rounded-xl bg-blue-600 hover:shadow-md text-white font-semibold hover:bg-blue-600"
           href={"/personalBest"}
         >
-          Go to PR´s
+          Go to PR
         </Link>
       </div>
     </article>
