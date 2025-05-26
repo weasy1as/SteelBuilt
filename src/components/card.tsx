@@ -52,7 +52,7 @@ export default function Card({ type, data }: WorkoutCardProps) {
     return (
       <article
         aria-label="Last Workout"
-        className="bg-black rounded-xl p-6 shadow-md space-y-4 text-white"
+        className="bg-gray-800 rounded-xl p-6 shadow-md space-y-4 text-white"
       >
         <h3 className="text-xl font-semibold">Last Workout</h3>
         <p>
@@ -71,14 +71,13 @@ export default function Card({ type, data }: WorkoutCardProps) {
     );
   }
 
-  // Animated PB Carousel
   const personalBests = data as PersonalBestData[];
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev + 1) % personalBests.length);
-    }, 4000); // rotate every 4 seconds
+    }, 4000);
     return () => clearInterval(interval);
   }, [personalBests.length]);
 
@@ -87,7 +86,7 @@ export default function Card({ type, data }: WorkoutCardProps) {
   return (
     <article
       aria-label="Personal Best"
-      className="bg-black rounded-xl p-6 shadow-md text-white  relative overflow-hidden"
+      className="bg-gray-800 rounded-xl p-6 shadow-md text-white  relative overflow-hidden"
     >
       <h3 className="text-xl font-semibold mb-2">Personal Best</h3>
       <div className="relative h-28">
@@ -115,12 +114,14 @@ export default function Card({ type, data }: WorkoutCardProps) {
       <p className="text-center text-sm text-white font-bold mt-4">
         {current + 1} / {personalBests.length}
       </p>
-      <Link
-        className="sm:bg-blue-400 px-4 py-2 rounded-xl bg-blue-600 hover:shadow-md text-white font-semibold hover:bg-blue-600"
-        href={"/personalBest"}
-      >
-        Go to PR´s
-      </Link>
+      <div className="mt-auto pt-2 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-6">
+        <Link
+          className=" sm:bg-blue-400 px-4 py-2 rounded-xl bg-blue-600 hover:shadow-md text-white font-semibold hover:bg-blue-600"
+          href={"/personalBest"}
+        >
+          Go to PR´s
+        </Link>
+      </div>
     </article>
   );
 }

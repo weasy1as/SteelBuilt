@@ -9,10 +9,6 @@ import { FaBars, FaTimes, FaUserCircle } from "react-icons/fa";
 const Sidebar = ({ session }: { session: Session | null }) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSignOut = async () => {
-    await fetch("/api/signout", { method: "POST" });
-  };
-
   const toggleMenu = () => setIsOpen((prev) => !prev);
 
   return (

@@ -46,7 +46,7 @@ const Form = ({ session }: { session: Session | null }) => {
 
         setWorkoutTypes(workoutData);
         setExerciseTypes(exerciseData);
-      } catch (err) {
+      } catch (e) {
         setMessage("Failed to load data. Please try again later.");
       }
     }

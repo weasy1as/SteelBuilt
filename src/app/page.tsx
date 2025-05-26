@@ -5,6 +5,7 @@ import Goal from "@/components/goal";
 import History from "@/components/history";
 import Sidebar from "@/components/sidebar";
 import { redirect } from "next/navigation";
+import MuscleGroupChart from "@/components/MuscleGroupChart";
 
 export default async function Home() {
   const session = await auth();
@@ -59,7 +60,7 @@ export default async function Home() {
   });
 
   // ✅ Fetch current goal
-  const goal = await prisma.goal.findFirst({
+  const goals = await prisma.goal.findMany({
     where: { userId: session.user?.id },
     orderBy: { updatedAt: "desc" },
   });
@@ -77,7 +78,7 @@ export default async function Home() {
   });
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-gray-100">
+    <div className="flex pb-6 flex-col items-center min-h-screen bg-gradient-to-b from-gray-900 to-black">
       <div className="w-full">
         <Sidebar session={session} />
       </div>
@@ -86,10 +87,11 @@ export default async function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {lastWorkoutData && <Card type="workout" data={lastWorkoutData} />}
           <Card type="personalBest" data={personalBestData} />
-          <Goal goal={goal} />
+          <Goal goals={goals} />
         </div>
 
-        <div>
+        <div className="flex flex-col gap-3 w-full">
+          <MuscleGroupChart />
           <History history={history} />
         </div>
       </div>

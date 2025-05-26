@@ -20,7 +20,7 @@ export default function History({ history }: { history: HistoryEntry[] }) {
       <h3 className="text-xl font-semibold mb-4 text-gray-800">
         Workout History
       </h3>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[200px]">
         <table className="w-full text-sm text-left text-gray-700">
           <thead className="bg-gray-100 uppercase text-gray-600 text-xs">
             <tr>

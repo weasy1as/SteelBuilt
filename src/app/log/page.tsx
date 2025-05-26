@@ -1,10 +1,15 @@
 import { auth } from "@/auth";
 import Form from "@/components/form";
 import Sidebar from "@/components/sidebar";
+import { redirect } from "next/navigation";
 import React from "react";
 
 export default async function Page() {
   const session = await auth();
+
+  if (!session) {
+    redirect("/login");
+  }
 
   return (
     <div className="w-full bg-gray-100">
