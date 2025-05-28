@@ -14,13 +14,11 @@ export default function SignIn() {
         </p>
       </div>
 
-      <button
-        type="submit"
-        onClick={() => signIn("google")}
-        className="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg"
-      >
-        Sign In with Google
-      </button>
+      <a href="/api/auth/signin">
+        <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
+          Sign In with Google
+        </button>
+      </a>
     </div>
   );
 }
