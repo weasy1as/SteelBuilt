@@ -1,5 +1,6 @@
 "use client";
-import { signIn } from "next-auth/react";
+
+import Link from "next/link";
 
 export default function SignIn() {
   return (
@@ -14,11 +15,11 @@ export default function SignIn() {
         </p>
       </div>
 
-      <a href="/api/auth/signin">
+      <Link href="/api/auth/signin">
         <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl shadow-lg">
           Sign In with Google
         </button>
-      </a>
+      </Link>
     </div>
   );
 }
